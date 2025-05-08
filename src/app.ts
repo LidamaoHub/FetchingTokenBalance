@@ -13,7 +13,7 @@ dotenv.config();
 
 // 初始化 Express 应用
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // 中间件
 app.use(helmet()); // 安全头
@@ -67,8 +67,8 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 // 启动服务器
-app.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
+app.listen(PORT, '127.0.0.1', () => {
+  console.log(`服务器运行在 http://127.0.0.1:${PORT}`);
 });
 
 export default app;
