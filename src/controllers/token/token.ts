@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import TokenService from '../../services/token/token.service';
+import TokenServiceMoralis from '../../services/token/token_moralis.service';
+import TokenServiceDune from '../../services/token/token_dune.service';
+import TokenServiceDebank from '../../services/token/token_debank.service';
 import { CustomRequest, WalletParams, WalletTokensResponse, ApiResponse, TokenQueryParams, TokenInfo } from '../../types';
 import TokenServiceBSC from '../../services/token/token_bsc.service';
 
@@ -36,9 +39,11 @@ class TokenController {
           tokens: paginatedTokens,
           totalCount: allTokens.length
         };
+      } else if (network.toLowerCase() === 'eth' || network.toLowerCase() === 'polygon') {
+        result = await TokenServiceDune.getTokenBalancesWithPagination(network, address, pageSize, page);
       } else {
-        // 其他网络使用alchemy sdk 内存分页方法
-        result = await TokenService.getTokenBalancesWithPagination(network, address, pageSize, page);
+        // 其他网络使用DeBank API
+        result = await TokenServiceDebank.getTokenBalancesWithPagination(network, address, pageSize, page);
       }
 
       // 返回结果

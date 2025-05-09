@@ -36,7 +36,6 @@ export const SUPPORTED_NETWORKS = [
  * @returns 是否是支持的网络
  */
 export const isSupportedNetwork = (network: string): boolean => {
-  console.log(SUPPORTED_NETWORKS)
   console.log(network,network.toLowerCase())
   return SUPPORTED_NETWORKS.includes(network.toLowerCase());
 };
