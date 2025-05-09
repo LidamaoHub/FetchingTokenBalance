@@ -20,6 +20,7 @@ export interface TokenInfo {
   decimals: number;
   logo: string | null;
   balance: string;
+  dataSource?: string; // 数据来源
 }
 
 
@@ -79,6 +80,8 @@ export interface WalletTokensResponse {
   page: number;
   pageSize: number;
   timestamp: string;
+  dataSource?: string;
+  processingTime?: number; // 处理数据所花的时间（毫秒）
 }
 
 

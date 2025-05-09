@@ -6,13 +6,12 @@ import { TokenInfo } from '../../types';
 export default class TokenServiceDune {
   // Dune 支持的网络映射及其对应的 chain_id
   private static readonly networkChainIds: Record<string, number> = {
-    eth: 1,         // 以太坊主网
-    polygon: 137,    // Polygon
-    bsc: 56,         // BNB Chain (BSC)
-    arbitrum: 42161, // Arbitrum
-    optimism: 10,    // Optimism
-    base: 8453,      // Base
-    avalanche: 43114 // Avalanche
+    eth: 1,        
+    polygon: 137,    
+    bsc: 56,        
+    arbitrum: 42161, 
+    optimism: 10,    
+    base: 8453,      
   };
 
   // 获取钱包的代币余额列表

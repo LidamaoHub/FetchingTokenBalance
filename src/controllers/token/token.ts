@@ -3,6 +3,7 @@ import TokenService from '../../services/token/token.service';
 import TokenServiceMoralis from '../../services/token/token_moralis.service';
 import TokenServiceDune from '../../services/token/token_dune.service';
 import TokenServiceDebank from '../../services/token/token_debank.service';
+import TokenAggregatorService from '../../services/token/token_aggregator.service';
 import { CustomRequest, WalletParams, WalletTokensResponse, ApiResponse, TokenQueryParams, TokenInfo } from '../../types';
 import TokenServiceBSC from '../../services/token/token_bsc.service';
 
@@ -27,24 +28,13 @@ class TokenController {
       if (pageSize < 1) pageSize = 30;
       if (page < 1) pageSize = 1;
       
-      let result;
-      if (network.toLowerCase() === 'bsc') {
-        // BSC 网络使用multicall方案
-        const allTokens = (await TokenServiceBSC.getTokenBalances(network, address)).tokens;
-        const startIndex = (page - 1) * pageSize;
-        const endIndex = startIndex + pageSize;
-        const paginatedTokens = allTokens.slice(startIndex, endIndex);
-        
-        result = {
-          tokens: paginatedTokens,
-          totalCount: allTokens.length
-        };
-      } else if (network.toLowerCase() === 'eth' || network.toLowerCase() === 'polygon') {
-        result = await TokenServiceDune.getTokenBalancesWithPagination(network, address, pageSize, page);
-      } else {
-        // 其他网络使用DeBank API
-        result = await TokenServiceDebank.getTokenBalancesWithPagination(network, address, pageSize, page);
-      }
+      // 使用聚合服务，自动备用机制
+      const result = await TokenAggregatorService.getTokenBalancesWithPagination(
+        network,
+        address,
+        pageSize,
+        page
+      );
 
       // 返回结果
       return res.json({
@@ -56,7 +46,9 @@ class TokenController {
           totalCount: result.totalCount,
           page,
           pageSize,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          dataSource: result.dataSource || 'Unknown',
+          processingTime: result.processingTime || 0
         }
       });
     } catch (error) {

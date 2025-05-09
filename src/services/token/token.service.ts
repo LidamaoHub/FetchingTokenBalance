@@ -54,14 +54,38 @@ class TokenService {
         const tokensResponse = await alchemy.core.getTokensForOwner(address, options);
         requestCount++;
         const pageTokens: TokenInfo[] = tokensResponse.tokens
-          .map(token => ({
-            contractAddress: token.contractAddress,
-            symbol: token.symbol || '未知',
-            name: token.name || '未知代币',
-            decimals: token.decimals || 18,
-            logo: token.logo || null,
-            balance: token.balance || '0'
-          }));
+          .map(token => {
+            // Alchemy 返回的余额已经是带小数位的字符串，但我们需要确保它是正确的
+            // 如果 balance 包含小数点，则需要转换为完整的小数位数字
+            const decimals = token.decimals || 18;
+            let balance = token.balance || '0';
+            
+            // 检查是否需要处理小数点
+            if (balance.includes('.')) {
+              try {
+                // 将浮点数转换为BigInt字符串
+                const balanceFloat = parseFloat(balance);
+                if (!isNaN(balanceFloat) && isFinite(balanceFloat)) {
+                  // 计算 amount * 10^decimals
+                  const multiplier = BigInt(10) ** BigInt(decimals);
+                  const balanceInWei = BigInt(Math.floor(balanceFloat * Number(multiplier)));
+                  balance = balanceInWei.toString();
+                }
+              } catch (error) {
+                console.warn(`无法转换代币余额: ${token.symbol}`, error);
+              }
+            }
+            
+            return {
+              contractAddress: token.contractAddress,
+              symbol: token.symbol || '未知',
+              name: token.name || '未知代币',
+              decimals: decimals,
+              logo: token.logo || null,
+              balance: balance,
+              dataSource: 'Alchemy'
+            };
+          });
         
         allTokens = [...allTokens, ...pageTokens];
         pageKey = tokensResponse.pageKey;
