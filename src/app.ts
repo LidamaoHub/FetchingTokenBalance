@@ -15,6 +15,10 @@ dotenv.config();
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
+
+app.set('trust proxy', true); 
+
+
 // 中间件
 app.use(helmet()); // 安全头
 app.use(cors()); // 跨域支持
