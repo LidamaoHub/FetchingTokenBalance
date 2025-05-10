@@ -5,6 +5,7 @@ import TokenServiceDune from './token_dune.service';
 import TokenServiceDebank from './token_debank.service';
 import TokenServiceBSC from './token_bsc.service';
 import { ServiceAlert } from '../../utils/serviceAlert';
+import { AdTokenBlocker } from '../../utils/adTokenBlocker';
 
  // 代币API服务聚合器,傻瓜式配置
 
@@ -123,7 +124,8 @@ export default class TokenAggregatorService {
     address: string,
     pageSize: number = 30,
     page: number = 1,
-    filterZeroBalance: boolean = false
+    filterZeroBalance: boolean = false,
+    filterAdToken: boolean = true
   ): Promise<{ tokens: TokenInfo[], totalCount: number, dataSource?: string, processingTime?: number }> {
     const paginationStartTime = Date.now();
     try {
@@ -131,10 +133,15 @@ export default class TokenAggregatorService {
       // 获取所有代币
       const result = await this.getTokenBalances(network, address);
       
-      // 如果需要过滤零资产
+      // 先过滤广告代币（如果需要）
       let filteredTokens = result.tokens;
+      if (filterAdToken) {
+        filteredTokens = AdTokenBlocker.filterAdTokens(filteredTokens);
+      }
+      
+      // 如果需要过滤零资产
       if (filterZeroBalance) {
-        filteredTokens = result.tokens.filter(token => {
+        filteredTokens = filteredTokens.filter(token => {
           // 过滤掉余额为0的代币
           return token.balance !== '0' && token.balance !== '';
         });

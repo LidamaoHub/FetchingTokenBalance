@@ -42,10 +42,8 @@ export class ServiceAlert {
     console.warn(`\n===== 服务警报 =====\n${alertMessage.title}\n${alertMessage.text}\n===================\n`);
   }
   
-  /**
-   * 记录一般信息
-   * @param message 日志消息
-   */
+  // 记录一般信息
+  
   public static log(message: string): void {
     console.log(`[${new Date().toISOString()}] ${message}`);
   }
