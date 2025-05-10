@@ -9,45 +9,45 @@ import TokenServiceBSC from './token_bsc.service';
 
 export default class TokenAggregatorService {
   // 定义每个网络的服务优先级
-  private static readonly servicePriority: Record<string, Array<(network: string, address: string) => Promise<{ tokens: TokenInfo[], totalCount: number }>>> = {
+  private static readonly servicePriority: Record<string, Array<any>> = {
     eth: [
-      (network, address) => TokenService.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceDune.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceMoralis.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceDebank.getTokenBalancesWithPagination(network, address)
+      TokenService,
+      TokenServiceDune,
+      TokenServiceMoralis,
+      TokenServiceDebank
     ],
     polygon: [
-      (network, address) => TokenService.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceDune.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceMoralis.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceDebank.getTokenBalancesWithPagination(network, address)
+      TokenService,
+      TokenServiceDune,
+      TokenServiceMoralis,
+      TokenServiceDebank
     ],
     bsc: [
-      (network, address) => TokenServiceMoralis.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceDebank.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceBSC.getTokenBalances(network, address)
+      TokenServiceMoralis,
+      TokenServiceDebank,
+      TokenServiceBSC
     ],
     arbitrum: [
-      (network, address) => TokenService.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceMoralis.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceDebank.getTokenBalancesWithPagination(network, address)
+      TokenService,
+      TokenServiceMoralis,
+      TokenServiceDebank
     ],
     optimism: [
-      (network, address) => TokenService.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceMoralis.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceDebank.getTokenBalancesWithPagination(network, address)
+      TokenService,
+      TokenServiceMoralis,
+      TokenServiceDebank
     ],
     base: [
-      (network, address) => TokenService.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceMoralis.getTokenBalancesWithPagination(network, address),
-      (network, address) => TokenServiceDebank.getTokenBalancesWithPagination(network, address)
+      TokenService,
+      TokenServiceMoralis,
+      TokenServiceDebank
     ]
   };
 
   // 默认服务优先级
   private static readonly defaultServicePriority = [
-    (network: string, address: string) => TokenServiceDebank.getTokenBalancesWithPagination(network, address),
-    (network: string, address: string) => TokenServiceMoralis.getTokenBalancesWithPagination(network, address)
+    TokenServiceDebank,
+    TokenServiceMoralis
   ];
 
   
@@ -66,49 +66,30 @@ export default class TokenAggregatorService {
     
     // 尝试按优先级调用每个服务
     for (let i = 0; i < services.length; i++) {
-      const serviceFunc = services[i];
+      const ServiceClass = services[i];
       try {
-        console.log(`尝试使用服务获取 ${networkLower} 网络的代币余额...`);
-        const result = await serviceFunc(network, address);
+        console.log(`尝试使用 ${ServiceClass.serviceName} 服务获取 ${networkLower} 网络的代币余额...`);
+        
+        let result;
+        if (ServiceClass === TokenServiceBSC) {
+          result = await ServiceClass.getTokenBalances(network, address);
+        } else {
+          result = await ServiceClass.getTokenBalancesWithPagination(network, address);
+        }
         
         // 检查结果是否有效
         if (result && result.tokens && result.tokens.length > 0) {
-          console.log(`成功获取 ${result.tokens.length} 个代币余额`);
+          console.log(`成功使用 ${ServiceClass.serviceName} 获取 ${result.tokens.length} 个代币余额`);
           
-          // 根据服务函数的索引确定数据来源
-          if (i === 0) {
-            if (networkLower === 'bsc') {
-              dataSource = 'BSC';
-            } else if (['eth', 'polygon', 'arbitrum', 'optimism', 'base'].includes(networkLower)) {
-              dataSource = 'Alchemy';
-            } else {
-              dataSource = 'DeBank';
-            }
-          } else if (i === 1) {
-            if (['eth', 'polygon'].includes(networkLower)) {
-              dataSource = 'Dune';
-            } else if (networkLower === 'bsc') {
-              dataSource = 'Moralis';
-            } else {
-              dataSource = 'Moralis';
-            }
-          } else if (i === 2) {
-            dataSource = 'Moralis';
-          } else {
-            dataSource = 'DeBank';
-          }
+          // 直接使用服务类的serviceName属性
+          dataSource = ServiceClass.serviceName;
           
-          // 添加数据来源到每个代币
-          const tokensWithSource = result.tokens.map(token => ({
-            ...token,
-            dataSource
-          }));
-          
+          // 不再添加数据来源到每个代币，只在响应的顶层保留
           const endTime = Date.now();
           const processingTime = endTime - startTime;
           
           return {
-            tokens: tokensWithSource,
+            tokens: result.tokens,
             totalCount: result.tokens.length,
             dataSource,
             processingTime
@@ -142,13 +123,23 @@ export default class TokenAggregatorService {
     network: string,
     address: string,
     pageSize: number = 30,
-    page: number = 1
+    page: number = 1,
+    filterZeroBalance: boolean = false
   ): Promise<{ tokens: TokenInfo[], totalCount: number, dataSource?: string, processingTime?: number }> {
     const paginationStartTime = Date.now();
     try {
       
       // 获取所有代币
       const result = await this.getTokenBalances(network, address);
+      
+      // 如果需要过滤零资产
+      let filteredTokens = result.tokens;
+      if (filterZeroBalance) {
+        filteredTokens = result.tokens.filter(token => {
+          // 过滤掉余额为0的代币
+          return token.balance !== '0' && token.balance !== '';
+        });
+      }
       
       // 计算分页
       const startIndex = (page - 1) * pageSize;
@@ -162,8 +153,8 @@ export default class TokenAggregatorService {
       const processingTime = result.processingTime ? result.processingTime + (paginationEndTime - paginationStartTime) : paginationTime;
       
       return {
-        tokens: result.tokens.slice(startIndex, endIndex),
-        totalCount: result.tokens.length,
+        tokens: filteredTokens.slice(startIndex, endIndex),
+        totalCount: filteredTokens.length,
         dataSource: result.dataSource,
         processingTime
       };

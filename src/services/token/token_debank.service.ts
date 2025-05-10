@@ -4,6 +4,9 @@ import { TokenInfo } from '../../types';
 // 这个方法主要是基于 DeBank API 来获取代币余额信息
 
 export default class TokenServiceDebank {
+  // 服务名称，用于数据源标识
+  public static readonly serviceName: string = 'DeBank';
+  
   private static readonly networkChainIds: Record<string, string> = {
     eth: 'eth',         
     polygon: 'polygon',  

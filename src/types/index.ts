@@ -20,7 +20,6 @@ export interface TokenInfo {
   decimals: number;
   logo: string | null;
   balance: string;
-  dataSource?: string; // 数据来源
 }
 
 
@@ -61,6 +60,7 @@ export interface TokenQueryParams {
   network: NetworkType;
   page?: number;
   pageSize?: number;
+  filterZeroBalance?: boolean;
 }
 
 

@@ -4,6 +4,9 @@ import { TokenInfo } from '../../types';
 // 这个方法主要是基于 Dune Analytics API 来获取代币余额信息
 
 export default class TokenServiceDune {
+  // 服务名称，用于数据源标识
+  public static readonly serviceName: string = 'Dune';
+  
   // Dune 支持的网络映射及其对应的 chain_id
   private static readonly networkChainIds: Record<string, number> = {
     eth: 1,        

@@ -23,6 +23,9 @@ class TokenController {
       const page = parseInt(req.query.page as string || '1', 10);
       let pageSize = parseInt(req.query.pageSize as string || '30', 10);
       
+      // 处理过滤零资产参数
+      const filterZeroBalance = req.query.filterZeroBalance === 'true';
+      
       // 限制每页最大数量为50
       if (pageSize > 50) pageSize = 50;
       if (pageSize < 1) pageSize = 30;
@@ -33,7 +36,8 @@ class TokenController {
         network,
         address,
         pageSize,
-        page
+        page,
+        filterZeroBalance
       );
 
       // 返回结果

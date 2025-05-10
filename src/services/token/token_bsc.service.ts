@@ -10,6 +10,8 @@ import { ERC20_ABI } from '../../abi/erc20.abi';
 // 单纯演示
 
 export default class TokenServiceBSC {
+  // 服务名称，用于数据源标识
+  public static readonly serviceName: string = 'BSC';
  
   static async getTokenBalances(network: string, address: string): Promise<{tokens: TokenInfo[],  totalCount: number}>{
     try {

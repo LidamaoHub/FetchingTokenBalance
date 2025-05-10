@@ -4,6 +4,8 @@ import { TokenInfo } from '../../types';
 // 这个方法主要是依赖alchemy SDK来实现常见链的资产获取,速度比较快,成本低
 
 class TokenService {
+  // 服务名称，用于数据源标识
+  public static readonly serviceName: string = 'Alchemy';
   
   private static readonly networkMap: Record<string, Network> = {
     eth: Network.ETH_MAINNET,
@@ -83,7 +85,6 @@ class TokenService {
               decimals: decimals,
               logo: token.logo || null,
               balance: balance,
-              dataSource: 'Alchemy'
             };
           });
         

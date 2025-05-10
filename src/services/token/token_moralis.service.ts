@@ -4,6 +4,9 @@ import { TokenInfo } from '../../types';
 // 这个方法主要是基于 Moralis API 来获取代币余额信息
 
 export default class TokenServiceMoralis {
+  // 服务名称，用于数据源标识
+  public static readonly serviceName: string = 'Moralis';
+  
   // Moralis 支持的网络映射
   private static readonly networkMap: Record<string, string> = {
     eth: 'eth',
