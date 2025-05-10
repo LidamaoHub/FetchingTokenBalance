@@ -4,6 +4,7 @@ import TokenServiceMoralis from './token_moralis.service';
 import TokenServiceDune from './token_dune.service';
 import TokenServiceDebank from './token_debank.service';
 import TokenServiceBSC from './token_bsc.service';
+import { ServiceAlert } from '../../utils/serviceAlert';
 
  // 代币API服务聚合器,傻瓜式配置
 
@@ -64,7 +65,6 @@ export default class TokenAggregatorService {
     let lastError: Error | null = null;
     let dataSource = '';
     
-    // 尝试按优先级调用每个服务
     for (let i = 0; i < services.length; i++) {
       const ServiceClass = services[i];
       try {
@@ -81,10 +81,8 @@ export default class TokenAggregatorService {
         if (result && result.tokens && result.tokens.length > 0) {
           console.log(`成功使用 ${ServiceClass.serviceName} 获取 ${result.tokens.length} 个代币余额`);
           
-          // 直接使用服务类的serviceName属性
           dataSource = ServiceClass.serviceName;
           
-          // 不再添加数据来源到每个代币，只在响应的顶层保留
           const endTime = Date.now();
           const processingTime = endTime - startTime;
           
@@ -99,12 +97,13 @@ export default class TokenAggregatorService {
         }
       } catch (error) {
         lastError = error as Error;
-        console.error(`服务调用失败: ${(error as Error).message}，尝试下一个服务`);
+        // 使用ServiceAlert发送API渠道故障警报
+        ServiceAlert.logApiFailure(ServiceClass.serviceName, network, address, error);
       }
     }
     
-    // 所有服务都失败，返回空结果并记录最后一个错误
-    console.error(`所有服务都失败，最后错误: ${lastError?.message || '未知错误'}`);
+    // 所有服务都失败，返回空结果并发送警报
+    ServiceAlert.logApiFailure('AllServices', network, address, lastError || '所有服务都失败，无具体错误信息');
     const endTime = Date.now();
     const processingTime = endTime - startTime;
     
@@ -159,6 +158,7 @@ export default class TokenAggregatorService {
         processingTime
       };
     } catch (error) {
+      ServiceAlert.logApiFailure('getTokenBalancesWithPagination', network, address, error);
       console.error('获取分页代币余额失败:', error);
       const endTime = Date.now();
       const processingTime = endTime - paginationStartTime;
